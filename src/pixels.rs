@@ -3,7 +3,7 @@ pub trait Pixel {
     fn values(&self) -> Vec<u8>;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct RGBAPixel {
     pub r: u8,
     pub g: u8,
@@ -11,7 +11,7 @@ pub struct RGBAPixel {
     pub a: u8,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct RGBPixel {
     pub r: u8,
     pub g: u8,

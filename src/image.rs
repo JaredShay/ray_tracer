@@ -8,12 +8,12 @@ pub struct Image<T: Pixel> {
 
 // The T: Clone contstaint is so when the buffer is initialized the pixel can
 // be cloned to fill the buffer.
-impl<T: Pixel> Image<T> where T: Clone {
+impl<T: Pixel> Image<T> where T: Clone, T: Default {
     pub fn new(width: u32, height: u32) -> Image<T> {
         Image {
             width: width,
             height: height,
-            buffer: vec![T::new(); (width * height) as usize]
+            buffer: vec![Default::default(); (width * height) as usize]
         }
     }
 
