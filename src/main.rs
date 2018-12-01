@@ -9,7 +9,7 @@ mod image;
 use image::{Image};
 
 mod vector;
-use vector::{Vector3, Vector3Operations};
+use vector::{Vector3};
 
 mod ray;
 use ray::{Ray};
@@ -17,13 +17,12 @@ use ray::{Ray};
 const WIDTH: u32 = 200;
 const HEIGHT: u32 = 100;
 
-fn color(ray: &Ray) -> Vector3 {
+fn color(ray: Ray) -> Vector3 {
     let t: f32 = 0.5 * (ray.direction.unit_vector().y() + 1.0);
 
     let white = Vector3(1.0, 1.0, 1.0);
     let blue = Vector3(0.5, 0.7, 1.0);
 
-    // Vec representing unit vec white
     white.lerp(&blue, t)
 }
 
@@ -37,24 +36,25 @@ fn main() {
     let vertical = Vector3(0.0, 2.0, 0.0);
     let origin = Vector3(0.0, 0.0, 0.0);
 
-    for y in (0..HEIGHT) {
-        for x in (0..WIDTH) {
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
+            let ray_x = x as f32 / WIDTH as f32;
+            let ray_y = y as f32 / HEIGHT as f32;
+
+            let direction = &lower_left_corner + &(&horizontal * ray_x) +
+                &(&vertical * ray_y);
+
+            let ray: Ray = Ray { origin: &origin, direction };
+
+            let color: Vector3 = color(ray);
+
             // flip the x and y when fetching pixels here. This is just a quirk
             // of the tutorial I'm using having a different co-ord system
             let mut pixel = image.pixel_at_mut(199 - x, 99 - y).unwrap();
 
-            let ray_x = x as f32 / WIDTH as f32;
-            let ray_y = y as f32 / HEIGHT as f32;
-
-            let ray: Ray = Ray {
-                origin: &origin,
-                direction: lower_left_corner.add(&horizontal.multiply(&ray_x)).add(&vertical.multiply(&ray_y)) };
-
-            let color: Vector3 = color(&ray);
-
-            pixel.r = (255.99 * color.x()) as u8;
-            pixel.g = (255.99 * color.y()) as u8;
-            pixel.b = (255.99 * color.z()) as u8;
+            pixel.r = (255.00 * color.x()) as u8;
+            pixel.g = (255.00 * color.y()) as u8;
+            pixel.b = (255.00 * color.z()) as u8;
         }
     }
 

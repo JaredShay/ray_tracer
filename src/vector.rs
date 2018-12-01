@@ -1,39 +1,50 @@
+use std::ops;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector3(pub f32, pub f32, pub f32);
 
-// This trait allows polymorphic functions. It doesn't really scale as each type
-// needs to implement every operation. It isn't too different than defining
-// different functions for each type eg. `multiply_f32`, and I'm pretty sure
-// that is sort of what rust is compiling too anyway.
-//
-// Another approach is to ensure each type can be cast into a Vector3. Then
-// only a single casting function needs to be defined and the operation
-// implementations can all be between two vectors.
-//
-// There isn't much needed here so I'll change this up when I throw some decent
-// numbers at it and see what performs best.
-pub trait Vector3Operations {
-    fn multiple_vector3(&self, other: &Vector3) -> Vector3;
-    fn divide_vector3(&self, other: &Vector3) -> Vector3;
-}
+// Vector3 + &Vector3
+impl<'a> ops::Add<&'a Vector3> for Vector3 {
+    type Output = Vector3;
 
-impl Vector3Operations for Vector3 {
-    fn multiple_vector3(&self, other: &Vector3) -> Vector3 {
-        Vector3(self.x() * other.x(), self.y() * other.y(), self.z() * other.z())
-    }
-
-    fn divide_vector3(&self, other: &Vector3) -> Vector3 {
-        Vector3(other.x() / self.x(), other.y() / self.y(), other.z() / self.z())
+    fn add(self, rhs: &'a Vector3) -> Vector3 {
+        Vector3(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
     }
 }
 
-impl Vector3Operations for f32 {
-    fn multiple_vector3(&self, other: &Vector3) -> Vector3 {
-        Vector3(self * other.x(), self * other.y(), self * other.z())
-    }
+// &Vector3 + &Vector3
+impl<'a, 'b> ops::Add<&'b Vector3> for &'a Vector3 {
+    type Output = Vector3;
 
-    fn divide_vector3(&self, other: &Vector3) -> Vector3 {
-        Vector3(other.x() / self, other.y() / self, other.z() / self)
+    fn add(self, rhs: &'b Vector3) -> Vector3 {
+        Vector3(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
+    }
+}
+
+// Vector3 * &Vector3
+impl<'a> ops::Mul<&'a Vector3> for Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, rhs: &'a Vector3) -> Vector3 {
+        Vector3(self.x() * rhs.x(), self.y() * rhs.y(), self.z() * rhs.z())
+    }
+}
+
+// &Vector3 * f32
+impl<'a> ops::Mul<f32> for &'a Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, rhs: f32) -> Vector3 {
+        Vector3(self.x() * rhs, self.y() * rhs, self.z() * rhs)
+    }
+}
+
+// &Vector3 / f32
+impl<'a> ops::Div<f32> for &'a Vector3 {
+    type Output = Vector3;
+
+    fn div(self, rhs: f32) -> Vector3 {
+        Vector3(self.x() / rhs, self.y() / rhs, self.z() / rhs)
     }
 }
 
@@ -55,22 +66,6 @@ impl Vector3 {
         self.2
     }
 
-    pub fn add(&self, other: &Vector3) -> Vector3 {
-        Vector3(self.x() + other.x(), self.y() + other.y(), self.z() + other.z())
-    }
-
-    pub fn subtract(&self, other: &Vector3) -> Vector3 {
-        Vector3(self.x() - other.x(), self.y() - other.y(), self.z() - other.z())
-    }
-
-    pub fn multiply<T: Vector3Operations>(&self, other: &T) -> Vector3 {
-        other.multiple_vector3(&self)
-    }
-
-    pub fn divide<T: Vector3Operations>(&self, other: &T) -> Vector3 {
-        other.divide_vector3(&self)
-    }
-
     pub fn dot_product(&self, other: &Vector3) -> f32 {
         self.x() * other.x() + self.y() * other.y() + self.z() * other.z()
     }
@@ -83,13 +78,12 @@ impl Vector3 {
     }
 
     pub fn unit_vector(&self) -> Vector3 {
-        self.divide(&self.magnitude())
+        self / self.magnitude()
     }
 
     // Linear Interpolation between two vectors at a value, x [0, 1].
-    // (1 - x)*start_vec + t*end_vec
     pub fn lerp(&self, end_value: &Vector3, x: f32) -> Vector3 {
-        self.multiply(&(1.0 - x)).add(&end_value.multiply(&x))
+        self * (1.0 - x) + &(end_value * x)
     }
 
     fn magnitude(&self) -> f32 {
@@ -131,24 +125,15 @@ mod tests {
     }
 
     #[test]
-    fn multiple_vector3_vector3() {
-        assert_eq!(Vector3(1.0, 4.0, 9.0), test_vec3().multiply(&test_vec3()))
+    fn multiple_vector3_ref_vector3() {
+        assert_eq!(Vector3(1.0, 4.0, 9.0), test_vec3() * &test_vec3())
     }
 
     #[test]
     fn multiple_vector3_f32() {
-        assert_eq!(Vector3(2.0, 4.0, 6.0), test_vec3().multiply(&2.0))
+        assert_eq!(Vector3(2.0, 4.0, 6.0), test_vec3() * 2.0)
     }
 
-    #[test]
-    fn divide_vector3_vector3() {
-        assert_eq!(Vector3(1.0, 1.0, 1.0), test_vec3().divide(&test_vec3()))
-    }
-
-    #[test]
-    fn divide_vector3_f32() {
-        assert_eq!(Vector3(0.5, 1.0, 1.5), test_vec3().divide(&2.0));
-    }
 
     #[test]
     fn dot_product_perpendicular() {

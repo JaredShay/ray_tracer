@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 
-use vector::{Vector3, Vector3Operations};
+use vector::{Vector3};
 
 #[derive(Debug)]
 pub struct Ray<'a> {
@@ -10,7 +10,7 @@ pub struct Ray<'a> {
 
 impl<'a> Ray<'a> {
     pub fn point_at_parameter(&self, parameter: f32) -> Vector3 {
-        self.origin.add(&self.direction.multiply(&parameter))
+        self.origin + &(&self.direction * parameter)
     }
 }
 
